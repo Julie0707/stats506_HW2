@@ -1,0 +1,123 @@
+---
+title: "HW2"
+author: "Jiaqi Zhu"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+editor: visual
+---
+
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+
+```{r}
+play_dice_v1 <- function(n) {
+  total <- -2 * n # Account for the cost
+  for(i in 1:n) {
+    roll <- sample(1:6, 1)
+    if(roll %% 2 == 0) { 
+      # Check if even (win)
+      total <- total + roll
+    }
+  }
+  return(total)
+}
+
+```
+
+```{r}
+play_dice_v2 <- function(n) {
+  rolls <- sample(1:6, n, replace = TRUE)
+  evens <- rolls[rolls %% 2 == 0]
+  return(sum(evens) - 2 * n)
+}
+```
+
+```{r}
+play_dice_v3 <- function(n) {
+  rolls <- sample(1:6, n, replace = TRUE)
+  tab <- table(rolls)
+
+  winnings_from_evens <- sum(as.numeric(names(tab)) * as.integer(tab) * (as.numeric(names(tab)) %% 2 == 0))
+  total_cost <- 2 * n
+  net_winnings = winnings_from_evens - total_cost
+  
+  return(net_winnings)
+}
+```
+
+```{r}
+play_dice_v4 <- function(n) {
+  rolls <- sample(1:6, n, replace = TRUE)
+  results <- sapply(rolls, function(x) if(x %% 2 == 0) return(x) else return(0))
+  return(sum(results) - 2 * n)
+}
+
+```
+
+```{r}
+set.seed(123)
+cat("Version 1 results with input 3:", play_dice_v1(3), "\n")
+set.seed(123)
+cat("Version 1 results with input 3000:", play_dice_v1(3000), "\n\n")
+set.seed(123)
+cat("Version 2 results with input 3:", play_dice_v2(3), "\n")
+set.seed(123)
+cat("Version 2 results with input 3000:", play_dice_v2(3000), "\n\n")
+set.seed(123)
+cat("Version 3 results with input 3:", play_dice_v3(3), "\n")
+set.seed(123)
+cat("Version 3 results with input 3000:", play_dice_v3(3000), "\n\n")
+set.seed(123)
+cat("Version 4 results with input 3:", play_dice_v4(3), "\n")
+set.seed(123)
+cat("Version 4 results with input 3000:", play_dice_v4(3000), "\n\n")
+```
+
+
+```{r}
+library(microbenchmark)
+set.seed(123)
+micro_100 <- microbenchmark(
+  v1 = play_dice_v1(100),
+  v2 = play_dice_v2(100),
+  v3 = play_dice_v3(100),
+  v4 = play_dice_v4(100),
+  times = 1000
+)
+
+# Benchmark for input = 10000
+set.seed(123)
+micro_10000 <- microbenchmark(
+  v1 = play_dice_v1(10000),
+  v2 = play_dice_v2(10000),
+  v3 = play_dice_v3(10000),
+  v4 = play_dice_v4(10000),
+  times = 1000
+)
+
+print(micro_100)
+print(micro_10000)
+```
+
+```{r}
+simulate_game <- function(N) {
+  results <- numeric(N)
+  for(i in 1:N) {
+    results[i] <- play_dice_v1(1) # You can use any version here
+  }
+  return(mean(results))
+}
+
+set.seed(123)
+N <- 1e5
+average_winnings <- simulate_game(N)
+
+print(average_winnings)
+```
+
