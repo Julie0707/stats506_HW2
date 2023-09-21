@@ -8,16 +8,18 @@ format:
 editor: visual
 ---
 
-
 ```{r}
 #| echo: false
 2 * 2
 ```
 
+## Problem 1 - Dice Game
+
+a.  Version 1: Implement this game using a loop over the die rolls.
 
 ```{r}
 play_dice_v1 <- function(n) {
-  total <- -2 * n # Account for the cost
+  total <- -2 * n # for the cost
   for(i in 1:n) {
     roll <- sample(1:6, 1)
     if(roll %% 2 == 0) { 
@@ -27,29 +29,32 @@ play_dice_v1 <- function(n) {
   }
   return(total)
 }
-
 ```
+
+Version 2: Implement this game using built-in R vectorized functions.
 
 ```{r}
 play_dice_v2 <- function(n) {
   rolls <- sample(1:6, n, replace = TRUE)
-  evens <- rolls[rolls %% 2 == 0]
-  return(sum(evens) - 2 * n)
+  wins <- rolls[rolls %% 2 == 0]
+  return(sum(wins) - 2 * n)
 }
 ```
+
+Version 3: Implement this by collapsing the die rolls into a single table()
 
 ```{r}
 play_dice_v3 <- function(n) {
   rolls <- sample(1:6, n, replace = TRUE)
   tab <- table(rolls)
-
-  winnings_from_evens <- sum(as.numeric(names(tab)) * as.integer(tab) * (as.numeric(names(tab)) %% 2 == 0))
+  winnings <- sum(as.numeric(names(tab)) * as.integer(tab) * (as.numeric(names(tab)) %% 2 == 0))
   total_cost <- 2 * n
-  net_winnings = winnings_from_evens - total_cost
-  
+  net_winnings = winnings - total_cost
   return(net_winnings)
 }
 ```
+
+Version 4: Implement this game by using one of the "apply" functions.
 
 ```{r}
 play_dice_v4 <- function(n) {
@@ -57,38 +62,42 @@ play_dice_v4 <- function(n) {
   results <- sapply(rolls, function(x) if(x %% 2 == 0) return(x) else return(0))
   return(sum(results) - 2 * n)
 }
-
 ```
+
+b.  Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3000.
+c.  Demonstrate that the four versions give the same result. Test with inputs 3 and 3000. (You may need to add a way to control the randomization.)
 
 ```{r}
 set.seed(123)
 cat("Version 1 results with input 3:", play_dice_v1(3), "\n")
 set.seed(123)
-cat("Version 1 results with input 3000:", play_dice_v1(3000), "\n\n")
+cat("Version 1 results with input 3000:", play_dice_v1(3000), "\n")
 set.seed(123)
 cat("Version 2 results with input 3:", play_dice_v2(3), "\n")
 set.seed(123)
-cat("Version 2 results with input 3000:", play_dice_v2(3000), "\n\n")
+cat("Version 2 results with input 3000:", play_dice_v2(3000), "\n")
 set.seed(123)
 cat("Version 3 results with input 3:", play_dice_v3(3), "\n")
 set.seed(123)
-cat("Version 3 results with input 3000:", play_dice_v3(3000), "\n\n")
+cat("Version 3 results with input 3000:", play_dice_v3(3000), "\n")
 set.seed(123)
 cat("Version 4 results with input 3:", play_dice_v4(3), "\n")
 set.seed(123)
 cat("Version 4 results with input 3000:", play_dice_v4(3000), "\n\n")
 ```
 
+d.  Use the microbenchmark package to clearly demonstrate the speed of the implementations. Compare performance with a low input (100) and a large input (10000). Discuss the results
 
 ```{r}
 library(microbenchmark)
+# Benchmark for input = 100
 set.seed(123)
 micro_100 <- microbenchmark(
   v1 = play_dice_v1(100),
   v2 = play_dice_v2(100),
   v3 = play_dice_v3(100),
   v4 = play_dice_v4(100),
-  times = 1000
+  times = 100
 )
 
 # Benchmark for input = 10000
@@ -98,26 +107,88 @@ micro_10000 <- microbenchmark(
   v2 = play_dice_v2(10000),
   v3 = play_dice_v3(10000),
   v4 = play_dice_v4(10000),
-  times = 1000
+  times = 100
 )
-
+```
+```{r}
 print(micro_100)
+```
+
+```{r}
 print(micro_10000)
 ```
+
+The microbenchmark package calculate time and compare the execution speed of R expressions. We can compare multiple versions of a function to see which one is the fastest. 
+
+With a low input (100), version 2 is the fastest, with built-in R vectorized functions improving the performance greatly. Version 3 and version 4 are not bad, they use time almost one times longer than the version 2. Version is not as stable as V 4, since the range is larger. We guess it's because the table's calculation workload depends on the dice' results. Version 1 is the worst, from which we know that the loop is not time-efficient.
+
+With a large input (10000), version 2 is the fastest, and is pretty stable. Version 3 is the second, a little slower than V 2 and has a lowest minimum time, but it's not stable. But version 4 are performing bad with large input, the gap between a table and a apply function is obvious. The gap between it and other versions are now pretty large.
+
+e. Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
+
+I assume the input variable (random variable) follows a discrete uniform distribution, that is to say in each experiment we assume the player play the same times dice game. Now we set this value as 20. If we conduct N experiments, then we repeat it N times, and calculate the mean of the results eventually. If it's a fair game, then on average it should have a zero net return. If the final result is pretty close to zero, we consider it fair.
 
 ```{r}
 simulate_game <- function(N) {
   results <- numeric(N)
   for(i in 1:N) {
-    results[i] <- play_dice_v1(1) # You can use any version here
+    results[i] <- play_dice_v2(20)
   }
   return(mean(results))
 }
 
-set.seed(123)
-N <- 1e5
+N <- 1e3
 average_winnings <- simulate_game(N)
-
 print(average_winnings)
 ```
+
+## Problem 2 - Linear Regression
+
+a. The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
+```{r}
+df <- read.csv("/Users/jiaqizhu/Downloads/506/cars.csv",header = TRUE)
+names(df) <- c("Height","Length","Width","Driveline","Engine.Type","Hybrid","Forward.Gears","Transmission","City.mpg","Fuel.Type","Highway.mpg","Classification","ID","Make","Model.Year","Year","Horsepower","Torque")
+```
+
+b. Restrict the data to cars whose Fuel Type is “Gasoline”.
+
+```{r}
+df_gasoline <- subset(df, Fuel.Type == "Gasoline")
+```
+
+c. Fit a linear regression model predicting MPG on the highway. 
+
+```{r}
+model <- lm(Highway.mpg ~ Horsepower + Torque + Height + Length + Width + as.factor(Year), data=df_gasoline)
+summary(model)
+```
+
+The coefficient for Horsepower represents the change in Highway.MPG for a one-unit increase in Horsepower, so if Horsepower increase 1 unit, Highway.MPG will increase 0.016, holding all other control variables constant. And this effect is statistically significant.
+
+d. It seems reasonable that there may be an interaction between horsepower and torque. Refit the model (with lm) and generate an interaction plot, showing how the relationship between horsepower and MPG changes as torque changes. Choose reasonable values of horsepower, and show lines for three different reasonable values of torque.
+```{r}
+model_interaction <- lm(Highway.mpg ~ Horsepower*Torque + Height + Length + Width + as.factor(Year), data=df_gasoline)
+summary(model_interaction)
+```
+```{r}
+summary(df_gasoline$Torque)
+summary(df_gasoline$Horsepower)
+```
+
+```{r}
+library(interactions)
+interact_plot(model_interaction, pred = Horsepower, modx = Torque, interval = TRUE, at = list(Year = 2012))
+```
+
+e. Calculate beta from d. manually (without using lm) by first creating a proper design matrix, then using matrix algebra to estimate beta. Confirm that you get the same result as lm did prior.
+
+```{r}
+X <- model.matrix(~ Horsepower*Torque + Height + Length + Width + as.factor(Year), data=df_gasoline)
+y <- df_gasoline$Highway.mpg
+beta_manual <- solve(t(X) %*% X) %*% t(X) %*% y
+beta_lm <- coef(model_interaction)
+print(beta_manual)
+print(beta_lm)
+```
+
 
