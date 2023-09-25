@@ -8,10 +8,7 @@ format:
 editor: visual
 ---
 
-```{r}
-#| echo: false
-2 * 2
-```
+https://github.com/Julie0707/stats506_HW2
 
 ## Problem 1 - Dice Game
 
@@ -110,6 +107,7 @@ micro_10000 <- microbenchmark(
   times = 100
 )
 ```
+
 ```{r}
 print(micro_100)
 ```
@@ -118,15 +116,15 @@ print(micro_100)
 print(micro_10000)
 ```
 
-The microbenchmark package calculate time and compare the execution speed of R expressions. We can compare multiple versions of a function to see which one is the fastest. 
+The microbenchmark package calculate time and compare the execution speed of R expressions. We can compare multiple versions of a function to see which one is the fastest.
 
 With a low input (100), version 2 is the fastest, with built-in R vectorized functions improving the performance greatly. Version 3 and version 4 are not bad, they use time almost one times longer than the version 2. Version is not as stable as V 4, since the range is larger. We guess it's because the table's calculation workload depends on the dice' results. Version 1 is the worst, from which we know that the loop is not time-efficient.
 
-With a large input (10000), version 2 is the fastest, and is pretty stable. Version 3 is the second, a little slower than V 2 and has a lowest minimum time, but it's not stable. But version 4 are performing bad with large input, the gap between a table and a apply function is obvious. The gap between it and other versions are now pretty large.
+With a large input (10000), version 2 is the fastest on average, and is pretty stable. Version 3 is the second, a little slower than V 2 and has a lowest minimum time and lower quatile time, but it's not stable. Version 4 is performing bad with large input, the gap between a table and a apply function is obvious. The gap between it and other versions are now pretty large. Version 1 is still the worst.
 
-e. Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
+e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
 
-I assume the input variable (random variable) follows a discrete uniform distribution, that is to say in each experiment we assume the player play the same times dice game. Now we set this value as 20. If we conduct N experiments, then we repeat it N times, and calculate the mean of the results eventually. If it's a fair game, then on average it should have a zero net return. If the final result is pretty close to zero, we consider it fair.
+I assume the input variable is a random variable that follows a discrete Uniform distribution, that is to say in each experiment we assume the player play the same times dice game. Now we set this value as 20. If we conduct N experiments, then we repeat it N times, and calculate the Mean of the results eventually. If it's a fair game, then on average it should have a zero net return. If the final result is pretty close to zero, we consider it fair.
 
 ```{r}
 simulate_game <- function(N) {
@@ -137,50 +135,58 @@ simulate_game <- function(N) {
   return(mean(results))
 }
 
-N <- 1e3
+N <- 1e6
 average_winnings <- simulate_game(N)
 print(average_winnings)
 ```
 
+As is shown above, the average_winnings is pretty close to zero, so there is no extra winning compared to its cost. I consider it a fair game.
+
+
 ## Problem 2 - Linear Regression
 
-a. The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
+a.  The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
+
 ```{r}
 df <- read.csv("/Users/jiaqizhu/Downloads/506/cars.csv",header = TRUE)
 names(df) <- c("Height","Length","Width","Driveline","Engine.Type","Hybrid","Forward.Gears","Transmission","City.mpg","Fuel.Type","Highway.mpg","Classification","ID","Make","Model.Year","Year","Horsepower","Torque")
 ```
 
-b. Restrict the data to cars whose Fuel Type is “Gasoline”.
+b.  Restrict the data to cars whose Fuel Type is "Gasoline".
 
 ```{r}
 df_gasoline <- subset(df, Fuel.Type == "Gasoline")
 ```
 
-c. Fit a linear regression model predicting MPG on the highway. 
+c.  Fit a linear regression model predicting MPG on the highway.
 
 ```{r}
 model <- lm(Highway.mpg ~ Horsepower + Torque + Height + Length + Width + as.factor(Year), data=df_gasoline)
 summary(model)
 ```
 
-The coefficient for Horsepower represents the change in Highway.MPG for a one-unit increase in Horsepower, so if Horsepower increase 1 unit, Highway.MPG will increase 0.016, holding all other control variables constant. And this effect is statistically significant.
+There is a positive relationship between Horsepower and Highwaympg. The coefficient for Horsepower represents the change in Highway.MPG for a one-unit increase in Horsepower, so if Horsepower increase 1 unit, Highway.MPG will increase 0.016, holding all other control variables constant. And this effect is statistically significant.
 
-d. It seems reasonable that there may be an interaction between horsepower and torque. Refit the model (with lm) and generate an interaction plot, showing how the relationship between horsepower and MPG changes as torque changes. Choose reasonable values of horsepower, and show lines for three different reasonable values of torque.
+d.  It seems reasonable that there may be an interaction between horsepower and torque. Refit the model (with lm) and generate an interaction plot, showing how the relationship between horsepower and MPG changes as torque changes. Choose reasonable values of horsepower, and show lines for three different reasonable values of torque.
+
 ```{r}
 model_interaction <- lm(Highway.mpg ~ Horsepower*Torque + Height + Length + Width + as.factor(Year), data=df_gasoline)
 summary(model_interaction)
 ```
+
 ```{r}
 summary(df_gasoline$Torque)
 summary(df_gasoline$Horsepower)
 ```
+
+The reasonable choice for values of torque is its (mean-sd., mean, mean+sd.), and the reasonable range for horsepower is (min., max.) i.e. (100, 630). And the package "interactions" automatically choose that. As for the year, I choose 2012 for prediction since it's the closest to the present.
 
 ```{r}
 library(interactions)
 interact_plot(model_interaction, pred = Horsepower, modx = Torque, interval = TRUE, at = list(Year = 2012))
 ```
 
-e. Calculate beta from d. manually (without using lm) by first creating a proper design matrix, then using matrix algebra to estimate beta. Confirm that you get the same result as lm did prior.
+e.  Calculate beta from d. manually (without using lm) by first creating a proper design matrix, then using matrix algebra to estimate beta. Confirm that you get the same result as lm did prior.
 
 ```{r}
 X <- model.matrix(~ Horsepower*Torque + Height + Length + Width + as.factor(Year), data=df_gasoline)
@@ -190,5 +196,219 @@ beta_lm <- coef(model_interaction)
 print(beta_manual)
 print(beta_lm)
 ```
+
+It's obvious that the results I get with manual calculation are identical to the prior results.
+
+
+## Problem 3 - Stata
+
+Repeat problem 2 parts a. through d. in Stata. 
+1. Import the data
+
+``` stata
+. capture log close
+. clear 
+. set memory 60000 
+. set matsize 150
+. set more 1
+. cd "/Users/jiaqizhu/Downloads/506"
+. log using hw1_p3.log, replace
+. import delimited "cars.csv"
+. describe
+
+Contains data
+  obs:         5,076                          
+ vars:            18                          
+ size:     1,543,104                          
+------------------------------------------------------------------------------------
+              storage   display    value
+variable name   type    format     label      variable label
+------------------------------------------------------------------------------------
+dimensionshei~t int     %8.0g                 Dimensions.Height
+dimensionslen~h int     %8.0g                 Dimensions.Length
+dimensionswidth int     %8.0g                 Dimensions.Width
+engineinform~ne str17   %17s                  Engine Information.Driveline
+engineinform~pe str60   %60s                  Engine Information.Engine Type
+engineinform~id str4    %9s                   Engine Information.Hybrid
+engineinform~rd byte    %8.0g                 Engine Information.Number of Forward
+                                                Gears
+engineinforma~n str30   %30s                  Engine Information.Transmission
+fuelinfor~tympg byte    %8.0g                 Fuel Information.City mpg
+fuelinformati~e str22   %22s                  Fuel Information.Fuel Type
+fuelinfor~aympg int     %8.0g                 Fuel Information.Highway mpg
+identificatio~n str22   %22s                  Identification.Classification
+identificatio~d str67   %67s                  Identification.ID
+identificatio~e str18   %18s                  Identification.Make
+identific~lyear str48   %48s                  Identification.Model Year
+identific~nyear int     %8.0g                 Identification.Year
+engineinforma~c int     %8.0g                 Engine Information.Engine
+                                                Statistics.Horsepower
+v18             int     %8.0g                 Engine Information.Engine
+                                                Statistics.Torque
+------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+```
+
+2.  Rename and Restrict the data
+``` stata
+. rename dimensionsheight height
+. rename dimensionslength length
+. rename dimensionswidth width
+. rename engineinformationdriveline driveline
+. rename engineinformationenginetype enginetype
+. rename engineinformationhybrid hybrid
+. rename engineinformationnumberofforward numberofforward
+. rename engineinformationtransmission transmission
+. rename fuelinformationcitympg citympg
+. rename fuelinformationfueltype fueltype
+. rename fuelinformationhighwaympg Highwaympg
+. rename identificationclassification classification
+. rename identificationid id
+. rename identificationmake make
+. rename identificationmodelyear modelyear
+. rename identificationyear year
+. rename engineinformationenginestatistic Horsepower
+. rename v18 Torque
+
+. gen gasoline_data = (fueltype == "Gasoline")
+. keep if gasoline_data == 1
+. describe
+```
+
+3.  Fitting the Linear Regression Model
+
+``` stata
+. regress Highwaympg Horsepower Torque height length width i.year
+
+      Source |       SS           df       MS      Number of obs   =     4,591
+-------------+----------------------------------   F(8, 4582)      =    413.35
+       Model |  70043.6695         8  8755.45869   Prob > F        =    0.0000
+    Residual |   97055.298     4,582  21.1818634   R-squared       =    0.4192
+-------------+----------------------------------   Adj R-squared   =    0.4182
+       Total |  167098.968     4,590  36.4050038   Root MSE        =    4.6024
+
+------------------------------------------------------------------------------
+  Highwaympg |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  Horsepower |   .0163556   .0022772     7.18   0.000     .0118913      .02082
+      Torque |  -.0507425    .002203   -23.03   0.000    -.0550614   -.0464236
+      height |   .0099079   .0011267     8.79   0.000      .007699    .0121168
+      length |    .001729   .0008836     1.96   0.050    -3.36e-06    .0034613
+       width |  -.0003343   .0009045    -0.37   0.712    -.0021075    .0014388
+             |
+        year |
+       2010  |  -.4539681   .6768246    -0.67   0.502     -1.78087    .8729342
+       2011  |   .1711016   .6757043     0.25   0.800    -1.153604    1.495808
+       2012  |   1.302928   .6810076     1.91   0.056    -.0321751    2.638031
+             |
+       _cons |   32.29266   .7225982    44.69   0.000     30.87602     33.7093
+------------------------------------------------------------------------------
+```
+
+There is a positive relationship between Horsepower and Highwaympg. The coefficient for Horsepower represents the change in Highway.MPG for a one-unit increase in Horsepower, so if Horsepower increase 1 unit, Highway.MPG will increase 0.016, holding all other control variables constant. And this effect is statistically significant at 0.01 level.
+
+4.  Fitting Model with Interaction
+
+``` stata
+. gen hp_torque = Horsepower * Torque
+. regress Highwaympg Horsepower Torque hp_torque height length width i.year
+
+      Source |       SS           df       MS      Number of obs   =     4,591
+-------------+----------------------------------   F(9, 4581)      =    480.07
+       Model |  81105.8715         9  9011.76351   Prob > F        =    0.0000
+    Residual |   85993.096     4,581  18.7716865   R-squared       =    0.4854
+-------------+----------------------------------   Adj R-squared   =    0.4844
+       Total |  167098.968     4,590  36.4050038   Root MSE        =    4.3326
+
+------------------------------------------------------------------------------
+  Highwaympg |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  Horsepower |  -.0166633   .0025388    -6.56   0.000    -.0216406    -.011686
+      Torque |  -.0860593   .0025333   -33.97   0.000    -.0910257   -.0810928
+   hp_torque |   .0001124   4.63e-06    24.28   0.000     .0001033    .0001214
+      height |   .0065604   .0010696     6.13   0.000     .0044634    .0086573
+      length |   .0017767   .0008318     2.14   0.033     .0001459    .0034075
+       width |  -.0011694   .0008521    -1.37   0.170      -.00284    .0005011
+             |
+        year |
+       2010  |  -.5627858   .6371716    -0.88   0.377    -1.811949    .6863777
+       2011  |   .0725356   .6361142     0.11   0.909    -1.174555    1.319626
+       2012  |   1.197033   .6411085     1.87   0.062    -.0598488    2.453915
+             |
+       _cons |   42.18795   .7930274    53.20   0.000     40.63323    43.74266
+------------------------------------------------------------------------------
+```
+
+and it's equivalent to
+
+``` stata
+. reg Highwaympg c.Horsepower##c.Torque height length width i.year
+
+      Source |       SS           df       MS      Number of obs   =     4,591
+-------------+----------------------------------   F(9, 4581)      =    480.07
+       Model |  81105.8715         9  9011.76351   Prob > F        =    0.0000
+    Residual |   85993.096     4,581  18.7716865   R-squared       =    0.4854
+-------------+----------------------------------   Adj R-squared   =    0.4844
+       Total |  167098.968     4,590  36.4050038   Root MSE        =    4.3326
+
+---------------------------------------------------------------------------------------
+           Highwaympg |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+----------------------+----------------------------------------------------------------
+           Horsepower |  -.0166633   .0025388    -6.56   0.000    -.0216406    -.011686
+               Torque |  -.0860593   .0025333   -33.97   0.000    -.0910257   -.0810928
+                      |
+c.Horsepower#c.Torque |   .0001124   4.63e-06    24.28   0.000     .0001033    .0001214
+                      |
+               height |   .0065604   .0010696     6.13   0.000     .0044634    .0086573
+               length |   .0017767   .0008318     2.14   0.033     .0001459    .0034075
+                width |  -.0011694   .0008521    -1.37   0.170      -.00284    .0005011
+                      |
+                 year |
+                2010  |  -.5627858   .6371716    -0.88   0.377    -1.811949    .6863777
+                2011  |   .0725356   .6361142     0.11   0.909    -1.174555    1.319626
+                2012  |   1.197033   .6411085     1.87   0.062    -.0598488    2.453915
+                      |
+                _cons |   42.18795   .7930274    53.20   0.000     40.63323    43.74266
+---------------------------------------------------------------------------------------
+```
+
+5.  Generating an Interaction Plot:
+
+``` stata
+. tabstat Torque, stat(count mean sd p25 p50 p75 min max)
+
+    variable |         N      mean        sd       p25       p50       p75       min       max
+-------------+--------------------------------------------------------------------------------
+      Torque |      4591  267.2196  101.3269       177       257       332        98       774
+----------------------------------------------------------------------------------------------
+
+. tabstat Horsepower, stat(count mean sd p25 p50 p75 min max)
+
+    variable |         N      mean        sd       p25       p50       p75       min       max
+-------------+--------------------------------------------------------------------------------
+  Horsepower |      4591  267.4659  97.43199       185       263       317       100       638
+----------------------------------------------------------------------------------------------
+```
+
+The reasonable choice for values of torque is its (1st qu., median, and 3rd qu.), being 177, 257, and 332 resp. And the reasonable range for horsepower is (100, 630).
+
+``` stata
+. margins, at(Horsepower=(100(50)638) Torque=(177 257 332))
+. marginsplot, noci recast(line) ///
+>     scheme(s1color) ///
+>     legend(on) ///
+>     name(MarginsPlot, replace) ///
+>     title("Interaction between Horsepower and Torque on Highwaympg") ///
+>     ytitle("Predicted Highwaympg") xtitle("Horsepower") ///
+>     xlabel(100(50)638) ylabel(, nogrid) ///
+>         
+
+  Variables that uniquely identify margins: Horsepower Torque
+```
+
+The plot we get this time is the same to the R-generated one. 
+![text](/Users/jiaqizhu/Downloads/506/stats506_HW2/MarginsPlot.png)
 
 
