@@ -15,6 +15,10 @@ https://github.com/Julie0707/stats506_HW2
 a.  Version 1: Implement this game using a loop over the die rolls.
 
 ```{r}
+#' Function to calculate the winnings of the game
+#' using a loop 
+#' @param n a numeric number means the play times
+#' @return The total gain or loss
 play_dice_v1 <- function(n) {
   total <- -2 * n # for the cost
   for(i in 1:n) {
@@ -31,6 +35,10 @@ play_dice_v1 <- function(n) {
 Version 2: Implement this game using built-in R vectorized functions.
 
 ```{r}
+#' Function to calculate the winnings of the game
+#' using built-in R vectorized functions
+#' @param n a numeric number means the play times
+#' @return The total gain or loss
 play_dice_v2 <- function(n) {
   rolls <- sample(1:6, n, replace = TRUE)
   wins <- rolls[rolls %% 2 == 0]
@@ -41,6 +49,10 @@ play_dice_v2 <- function(n) {
 Version 3: Implement this by collapsing the die rolls into a single table()
 
 ```{r}
+#' Function to calculate the winnings of the game
+#' by collapsing the die rolls into a single table
+#' @param n a numeric number means the play times
+#' @return The total gain or loss
 play_dice_v3 <- function(n) {
   rolls <- sample(1:6, n, replace = TRUE)
   tab <- table(rolls)
@@ -54,6 +66,10 @@ play_dice_v3 <- function(n) {
 Version 4: Implement this game by using one of the "apply" functions.
 
 ```{r}
+#' Function to calculate the winnings of the game
+#' using sapply functions
+#' @param n a numeric number means the play times
+#' @return The total gain or loss
 play_dice_v4 <- function(n) {
   rolls <- sample(1:6, n, replace = TRUE)
   results <- sapply(rolls, function(x) if(x %% 2 == 0) return(x) else return(0))
@@ -94,7 +110,7 @@ micro_100 <- microbenchmark(
   v2 = play_dice_v2(100),
   v3 = play_dice_v3(100),
   v4 = play_dice_v4(100),
-  times = 100
+  times = 1000
 )
 
 # Benchmark for input = 10000
@@ -104,7 +120,7 @@ micro_10000 <- microbenchmark(
   v2 = play_dice_v2(10000),
   v3 = play_dice_v3(10000),
   v4 = play_dice_v4(10000),
-  times = 100
+  times = 1000
 )
 ```
 
@@ -127,6 +143,10 @@ e.  Do you think this is a fair game? Defend your decision with evidence based u
 I assume the input variable is a random variable that follows a discrete Uniform distribution, that is to say in each experiment we assume the player play the same times dice game. Now we set this value as 20. If we conduct N experiments, then we repeat it N times, and calculate the Mean of the results eventually. If it's a fair game, then on average it should have a zero net return. If the final result is pretty close to zero, we consider it fair.
 
 ```{r}
+#' Function to calculate the gain or loss of the game over experiments
+#' using Monte Carlo simulation
+#' @param n a numeric number means the experiment times
+#' @return The gain or loss on average
 simulate_game <- function(N) {
   results <- numeric(N)
   for(i in 1:N) {
@@ -141,7 +161,6 @@ print(average_winnings)
 ```
 
 As is shown above, the average_winnings is pretty close to zero, so there is no extra winning compared to its cost. I consider it a fair game.
-
 
 ## Problem 2 - Linear Regression
 
@@ -199,11 +218,9 @@ print(beta_lm)
 
 It's obvious that the results I get with manual calculation are identical to the prior results.
 
-
 ## Problem 3 - Stata
 
-Repeat problem 2 parts a. through d. in Stata. 
-1. Import the data
+Repeat problem 2 parts a. through d. in Stata. 1. Import the data
 
 ``` stata
 . capture log close
@@ -248,10 +265,10 @@ v18             int     %8.0g                 Engine Information.Engine
 ------------------------------------------------------------------------------------
 Sorted by: 
      Note: Dataset has changed since last saved.
-
 ```
 
 2.  Rename and Restrict the data
+
 ``` stata
 . rename dimensionsheight height
 . rename dimensionslength length
@@ -374,6 +391,8 @@ c.Horsepower#c.Torque |   .0001124   4.63e-06    24.28   0.000     .0001033    .
 ---------------------------------------------------------------------------------------
 ```
 
+As is shown above, the interaction term is significant at 0.01 level. So there is indeed a interaction effect between horsepower and torque.
+
 5.  Generating an Interaction Plot:
 
 ``` stata
@@ -408,7 +427,4 @@ The reasonable choice for values of torque is its (1st qu., median, and 3rd qu.)
   Variables that uniquely identify margins: Horsepower Torque
 ```
 
-The plot we get this time is the same to the R-generated one. 
-![text](/Users/jiaqizhu/Downloads/506/stats506_HW2/MarginsPlot.png)
-
-
+The plot we get this time is similar to the R-generated one. ![MarginsPlot](./MarginsPlot.png)
